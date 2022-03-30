@@ -1,4 +1,7 @@
 /target
+*~
+*.o
+tmp*
 
 
 # Added by cargo
