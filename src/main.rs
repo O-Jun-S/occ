@@ -16,7 +16,7 @@ fn main() {
     print!(".intel_syntax noprefix\n");
     print!(".global main\n");
     print!("main:\n");
-    print!("  mov rax, {}\n", num.get());
+    print!("  mov rax, {}\n", num.gen());
     print!("  ret\n");
     return;
 }
