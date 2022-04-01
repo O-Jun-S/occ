@@ -12,7 +12,7 @@ use nom::{
 };
 
 
-/// <factor> := <const_val> | <paren_expr>
+/// <factor> := <const_int> | <paren_expr>
 pub fn factor_parser(s: &str) -> IResult<&str, Expr> {
     alt((
         map(
@@ -95,7 +95,7 @@ pub fn expr_parser(s: &str) -> IResult<&str, Expr> {
 }
 
 /// Parse string containing parentheses.
-/// "(" expr ")"
+/// <paren_expr> := "(" <expr> ")"
 pub fn parentheses_parser(s: &str) -> IResult<&str, Expr> {
     let res_opt = opt(
         delimited(
@@ -124,7 +124,7 @@ fn parentheses_parser_test() {
     );
 }
 
-/// mul = constint ("*" primary | "/" primary)*
+/// <term> := <factor> [ ('*'|'/') <term> ]
 /// Parsing expressions multiplying and dividing.
 pub fn term_parser(s: &str) -> IResult<&str, Expr> {
     // Parse * and /
