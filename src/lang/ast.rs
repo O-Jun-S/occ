@@ -3,16 +3,18 @@ pub struct ConstInt(i32);
 
 
 impl ConstInt {
+    /// Create an constint.
     pub fn new(n: i32) -> ConstInt {
         ConstInt(n)
     }
 
-    /// Evaluate an integer.
+    /// Generate assembly.
     pub fn gen(&self) {
         print!("  push {}\n", self.0);
     }
 }
 
+/// Represents expression.
 pub enum Expr {
     ConstInt(ConstInt),
     BinaryOp(Box<BinaryOp>),
@@ -25,7 +27,7 @@ pub struct BinaryOp {
     rhs: Expr,
 }
 
-// Kinds of operators.
+/// Kinds of operators.
 pub enum OpKind {
     Add,
     Sub,
@@ -43,10 +45,12 @@ impl Expr {
 }
 
 impl BinaryOp {
+    /// Create a new BinaryOp.
     pub fn new(op_kind: OpKind, lhs: Expr, rhs: Expr) -> BinaryOp {
         BinaryOp { op_kind, lhs, rhs }
     }
 
+    /// Generate assembly.
     pub fn gen(&self) {
         self.lhs.gen();
         self.rhs.gen();
