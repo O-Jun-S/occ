@@ -58,8 +58,40 @@ fn constint_parser_test() {
 }
 
 /// Expression parser(temporary).
+/// expr = mul ("+" mul | "-" mul)*
 pub fn expr_parser(s: &str) -> IResult<&str, Expr> {
-    mul_parser(s)
+    let op_kind_parser =
+        map(
+            alt((char('+'), char('-'))),
+            |op_char|
+                match op_char {
+                    '+' => OpKind::Add,
+                    '-' => OpKind::Sub,
+                    _ => panic!("Expected + or - !")
+                },
+        );
+    
+    let binaryop_parser = tuple((
+        mul_parser,
+        opt(
+            tuple((
+                op_kind_parser,
+                mul_parser
+            ))
+        )
+    ));
+
+    map(binaryop_parser, |(lhs, rhs_opt)| {
+        if let Option::Some((op_kind, rhs)) = rhs_opt {
+            Expr::BinaryOp(
+                Box::new(
+                    BinaryOp::new(op_kind, lhs, rhs),
+                )
+            )
+        } else {
+            lhs
+        }
+    })(s)
 }
 
 /// Parse string containing parentheses.
