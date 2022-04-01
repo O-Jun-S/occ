@@ -23,44 +23,68 @@ fn constint_test() {
 
 pub enum Expr {
     ConstInt(ConstInt),
-    OpPlus(Box<OpPlus>),
+    BinaryOp(Box<BinaryOp>),
 }
 
-pub struct OpPlus {
+// Represents binary operator.
+pub struct BinaryOp {
+    op_kind: OpKind,
     lhs: Expr,
     rhs: Expr,
+}
+
+// Kinds of operators.
+pub enum OpKind {
+    Add,
+    Sub,
+    Mul,
+    Div,
 }
 
 impl Expr {
     pub fn gen(&self) -> i32 {
         match self {
             Expr::ConstInt(expr) => expr.gen(),
-            Expr::OpPlus(expr) => expr.gen(),
+            Expr::BinaryOp(expr) => expr.gen(),
         }
     }
 }
 
-impl OpPlus {
-    pub fn new(lhs: Expr, rhs: Expr) -> OpPlus {
-        OpPlus { lhs, rhs }
+impl BinaryOp {
+    pub fn new(op_kind: OpKind, lhs: Expr, rhs: Expr) -> BinaryOp {
+        BinaryOp { op_kind, lhs, rhs }
     }
 
     pub fn gen(&self) -> i32 {
         print!("  pop rdi\n");
         print!("  pop rax\n");
-        print!("  add rax, rdi\n");
-        self.lhs.gen() + self.rhs.gen()
+        match &self.op_kind {
+            OpKind::Add => print!("  add rax, rdi\n"),
+            OpKind::Sub => print!("  sub rax, rdi\n"),
+            OpKind::Mul => print!("  imul rax, rdi\n"),
+            OpKind::Div => print!("  cqo\n  idiv rdi\n"),
+        };
+        print!("  push rax");
+
+        match &self.op_kind {
+            OpKind::Add => self.lhs.gen() + self.rhs.gen(),
+            OpKind::Sub => self.lhs.gen() - self.rhs.gen(),
+            OpKind::Mul => self.lhs.gen() * self.rhs.gen(),
+            OpKind::Div => self.lhs.gen() / self.rhs.gen(),
+        }
     }
 }
 
 #[test]
-fn op_plus_test() {
-    let expect = 1 + (2 + 3);
-    let num = OpPlus::new(
+fn op_test() {
+    let expect = 1 + (2 * 3);
+    let num = BinaryOp::new(
+        OpKind::Add,
         Expr::ConstInt(ConstInt::new(1)),
-        Expr::OpPlus(
+        Expr::BinaryOp(
             Box::new(
-                OpPlus::new(
+                BinaryOp::new(
+                    OpKind::Mul,
                     Expr::ConstInt(ConstInt::new(2)),
                     Expr::ConstInt(ConstInt::new(3)),
                 )
