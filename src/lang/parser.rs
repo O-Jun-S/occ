@@ -1,22 +1,25 @@
 use super::ast::*;
 use nom::{
     IResult,
-    character::complete::digit1,
-    sequence::delimited,
-    bytes::complete::tag,
     branch::alt,
+    bytes::complete::tag,
     combinator::map,
+    combinator::opt,
+    sequence::tuple,
+    sequence::delimited,
+    character::complete::digit1,
+    character::complete::char,
 };
 
 
-/// primary = constint | "(" expr ")"
+/// primary = constint | "(" expr ")" | expr
 pub fn primary_parser(s: &str) -> IResult<&str, Expr> {
     alt((
+        parentheses_parser,
         map(
             constint_parser,
             |constint| Expr::ConstInt(constint),
         ),
-        parentheses_parser,
     ))(s)
 }
 
@@ -56,13 +59,27 @@ fn constint_parser_test() {
 
 /// Expression parser(temporary).
 pub fn expr_parser(s: &str) -> IResult<&str, Expr> {
-    primary_parser(s)
+    mul_parser(s)
 }
 
 /// Parse string containing parentheses.
 /// "(" expr ")"
 pub fn parentheses_parser(s: &str) -> IResult<&str, Expr> {
-    delimited(tag("("), expr_parser, tag(")"))(s)
+    let res_opt = opt(
+        delimited(
+            tag("("),
+            expr_parser,
+            tag(")")
+        ),
+    )(s).unwrap();
+
+    if let (no_used, Option::Some(expr)) = res_opt {
+        Ok((no_used, expr))
+    }
+
+    else {
+        expr_parser(s)
+    }
 }
 
 #[test]
@@ -73,4 +90,74 @@ fn parentheses_parser_test() {
         expected,
         actual,
     );
+}
+
+/// mul = constint ("*" primary | "/" primary)*
+/// Parsing expressions multiplying and dividing.
+pub fn mul_parser(s: &str) -> IResult<&str, Expr> {
+    // Parse * and /
+    let op_kind_parser = map(
+        alt((char('*'), char('/'))),
+        |op_char|
+                match op_char {
+                    '*' => OpKind::Mul,
+                    '/' => OpKind::Div,
+                    _ => panic!("Expected * or /"),
+                },
+    );
+
+    let binaryop_parser = tuple((
+        constint_parser,
+        opt(
+            tuple((
+                op_kind_parser,
+                primary_parser,
+            ))
+        )
+    ));
+
+    map(binaryop_parser, |(lhs, rhs_opt)| {
+        if let Option::Some((op_kind, rhs)) = rhs_opt {
+            Expr::BinaryOp(
+                Box::new(
+                    BinaryOp::new(
+                        op_kind,
+                        Expr::ConstInt(lhs),
+                        rhs,
+                    )
+                )
+            )
+        }
+
+        else {
+            Expr::ConstInt(lhs)
+        }
+    })(s)
+}
+
+#[test]
+fn mul_parser_test() {
+    let (_, actual) = mul_parser("2*3/3").unwrap();
+
+    let dividing = Expr::BinaryOp(
+        Box::new(
+            BinaryOp::new(
+                OpKind::Div,
+                Expr::ConstInt(ConstInt::new(3)),
+                Expr::ConstInt(ConstInt::new(3)),
+            )
+        )
+    );
+
+    let expected = Expr::BinaryOp(
+        Box::new(
+            BinaryOp::new(
+                OpKind::Mul,
+                Expr::ConstInt(ConstInt::new(2)),
+                dividing,
+            )
+        )
+    );
+
+    assert_eq!(expected, actual);
 }
