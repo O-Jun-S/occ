@@ -23,6 +23,7 @@ cargo build
 
 assert 0 0
 assert 42 42
+assert 9 "3*3*3/3"
 
 echo The test ended correctly.
 
