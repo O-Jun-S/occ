@@ -8,9 +8,8 @@ impl ConstInt {
     }
 
     /// Evaluate an integer.
-    pub fn gen(&self) -> i32 {
+    pub fn gen(&self) {
         print!("  push {}\n", self.0);
-        self.0
     }
 }
 
@@ -35,7 +34,7 @@ pub enum OpKind {
 }
 
 impl Expr {
-    pub fn gen(&self) -> i32 {
+    pub fn gen(&self) {
         match self {
             Expr::ConstInt(expr) => expr.gen(),
             Expr::BinaryOp(expr) => expr.gen(),
@@ -48,7 +47,9 @@ impl BinaryOp {
         BinaryOp { op_kind, lhs, rhs }
     }
 
-    pub fn gen(&self) -> i32 {
+    pub fn gen(&self) {
+        self.lhs.gen();
+        self.rhs.gen();
         print!("  pop rdi\n");
         print!("  pop rax\n");
         match &self.op_kind {
@@ -57,13 +58,6 @@ impl BinaryOp {
             OpKind::Mul => print!("  imul rax, rdi\n"),
             OpKind::Div => print!("  cqo\n  idiv rdi\n"),
         };
-        print!("  push rax");
-
-        match &self.op_kind {
-            OpKind::Add => self.lhs.gen() + self.rhs.gen(),
-            OpKind::Sub => self.lhs.gen() - self.rhs.gen(),
-            OpKind::Mul => self.lhs.gen() * self.rhs.gen(),
-            OpKind::Div => self.lhs.gen() / self.rhs.gen(),
-        }
+        print!("  push rax\n");
     }
 }
