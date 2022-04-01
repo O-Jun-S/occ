@@ -12,28 +12,28 @@ use nom::{
 };
 
 
-/// primary = constint | "(" expr ")" | expr
-pub fn primary_parser(s: &str) -> IResult<&str, Expr> {
+/// <factor> := <const_val> | <paren_expr>
+pub fn factor_parser(s: &str) -> IResult<&str, Expr> {
     alt((
-        parentheses_parser,
         map(
             constint_parser,
             |constint| Expr::ConstInt(constint),
         ),
+        parentheses_parser,
     ))(s)
 }
 
 #[test]
-fn primary_parser_test() {
+fn factor_parser_test() {
     let expected1 = Expr::ConstInt(ConstInt::new(5));
-    let (_, actual1) = primary_parser("5").unwrap();
+    let (_, actual1) = factor_parser("5").unwrap();
     assert_eq!(
         expected1,
         actual1,
     );
 
     let expected2 = Expr::ConstInt(ConstInt::new(10));
-    let (_, actual2) = primary_parser("(10)").unwrap();
+    let (_, actual2) = factor_parser("(10)").unwrap();
     assert_eq!(
         expected2,
         actual2,
@@ -72,11 +72,11 @@ pub fn expr_parser(s: &str) -> IResult<&str, Expr> {
         );
     
     let binaryop_parser = tuple((
-        mul_parser,
+        term_parser,
         opt(
             tuple((
                 op_kind_parser,
-                mul_parser
+                expr_parser,
             ))
         )
     ));
@@ -126,7 +126,7 @@ fn parentheses_parser_test() {
 
 /// mul = constint ("*" primary | "/" primary)*
 /// Parsing expressions multiplying and dividing.
-pub fn mul_parser(s: &str) -> IResult<&str, Expr> {
+pub fn term_parser(s: &str) -> IResult<&str, Expr> {
     // Parse * and /
     let op_kind_parser = map(
         alt((char('*'), char('/'))),
@@ -139,11 +139,11 @@ pub fn mul_parser(s: &str) -> IResult<&str, Expr> {
     );
 
     let binaryop_parser = tuple((
-        constint_parser,
+        factor_parser,
         opt(
             tuple((
                 op_kind_parser,
-                primary_parser,
+                term_parser,
             ))
         )
     ));
@@ -154,7 +154,7 @@ pub fn mul_parser(s: &str) -> IResult<&str, Expr> {
                 Box::new(
                     BinaryOp::new(
                         op_kind,
-                        Expr::ConstInt(lhs),
+                        lhs,
                         rhs,
                     )
                 )
@@ -162,14 +162,14 @@ pub fn mul_parser(s: &str) -> IResult<&str, Expr> {
         }
 
         else {
-            Expr::ConstInt(lhs)
+            lhs
         }
     })(s)
 }
 
 #[test]
-fn mul_parser_test() {
-    let (_, actual) = mul_parser("2*3/3").unwrap();
+fn term_parser_test() {
+    let (_, actual) = term_parser("2*3/3").unwrap();
 
     let dividing = Expr::BinaryOp(
         Box::new(
