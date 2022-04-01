@@ -1,4 +1,5 @@
 /// It represents constant integer.
+#[derive(Debug,PartialEq)]
 pub struct ConstInt(i32);
 
 
@@ -15,12 +16,14 @@ impl ConstInt {
 }
 
 /// Represents expression.
+#[derive(Debug,PartialEq)]
 pub enum Expr {
     ConstInt(ConstInt),
     BinaryOp(Box<BinaryOp>),
 }
 
 // Represents binary operator.
+#[derive(Debug,PartialEq)]
 pub struct BinaryOp {
     op_kind: OpKind,
     lhs: Expr,
@@ -28,6 +31,7 @@ pub struct BinaryOp {
 }
 
 /// Kinds of operators.
+#[derive(Debug,PartialEq)]
 pub enum OpKind {
     Add,
     Sub,
