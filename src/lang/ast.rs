@@ -14,13 +14,6 @@ impl ConstInt {
     }
 }
 
-#[test]
-fn constint_test() {
-    let expect = 128;
-    let num = ConstInt::new(expect);
-    assert_eq!(num.gen(), expect);
-}
-
 pub enum Expr {
     ConstInt(ConstInt),
     BinaryOp(Box<BinaryOp>),
@@ -73,27 +66,4 @@ impl BinaryOp {
             OpKind::Div => self.lhs.gen() / self.rhs.gen(),
         }
     }
-}
-
-#[test]
-fn op_test() {
-    let expect = 1 + (2 * 3);
-    let num = BinaryOp::new(
-        OpKind::Add,
-        Expr::ConstInt(ConstInt::new(1)),
-        Expr::BinaryOp(
-            Box::new(
-                BinaryOp::new(
-                    OpKind::Mul,
-                    Expr::ConstInt(ConstInt::new(2)),
-                    Expr::ConstInt(ConstInt::new(3)),
-                )
-            )
-        ),
-    );
-
-    assert_eq!(
-        num.gen(),
-        expect,
-    );
 }
