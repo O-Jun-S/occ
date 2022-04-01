@@ -56,10 +56,7 @@ fn constint_parser_test() {
 
 /// Expression parser(temporary).
 pub fn expr_parser(s: &str) -> IResult<&str, Expr> {
-    constint_parser(s)
-        .map(|(no_used, constint)|
-            (no_used, Expr::ConstInt(constint))
-        )
+    primary_parser(s)
 }
 
 /// Parse string containing parentheses.
